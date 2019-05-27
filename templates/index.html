@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>广告牌报价</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="/static/bootstrap/css/bootstrap.min.css">
+    <script src="/static/jquery.min.js"></script>
+    <script src="../static/bootstrap/js/bootstrap.min.js"></script>
+    <style>
+        body {
+            width:100%;
+            height:100%;
+        }
+        .container {
+            width : 550px;
+            margin-left:0px;
+            margin-top:20px;
+        }
+        .name-label {
+            line-height: 34px;
+        }
+
+        .total-container {
+            font-size: 20px;
+        }
+        .total-container .total {
+            font-size: 30px;
+        }
+
+        .margin-top {
+            margin-top:10px;
+        }
+        .inline {
+            display: inline-block;
+        }
+
+        .result_num {
+            font-size: 20px;
+            padding-left: 15px;
+            cursor: pointer;
+            display: inline-block;
+        }
+
+
+        label {
+            font-weight: normal !important;
+            font-size: 15px;
+            margin-left : 20px;
+        }
+        .btn-link {
+            text-decoration: underline;
+            cursor: pointer;
+        }
+        .font20 {
+            font-size : 20px;
+        }
+
+
+        @media screen and (min-width: 768px) {
+            .name-label {
+                text-align: right;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="row form-group">
+        <div class="col-xs-12 col-md-3 name-label">项目：</div>
+        <div class="col-xs-12 col-md-9">
+            <select class="form-control" id="category"
+                    onchange="categoryOnchange(this)"></select>
+        </div>
+    </div>
+    <div class="row form-group">
+        <div class="col-xs-12 col-md-3 name-label">品种：</div>
+        <div class="col-xs-12 col-md-9">
+            <select class="form-control" id="variety"
+                    onchange="varietyOnchange()"></select>
+        </div>
+    </div>
+    <!-- 工艺 -->
+    <div class="row form-group">
+        <div class="col-xs-12 col-md-3 name-label"></div>
+        <div class="col-xs-12 col-md-9">
+            <div id="craftContainer">
+            </div>
+        </div>
+    </div>
+    <div class="row form-group">
+        <div class="col-xs-12 col-md-3 name-label">尺寸（cm）：</div>
+        <div class="col-xs-12 col-md-9">
+            <input class="form-control inline" id="length" placeholder="长度" type="number" style="width:43%">
+            <div style="width:9%;text-align: center;" class="inline">x</div>
+            <input class="form-control inline" id="width" placeholder="仅按面积时输入宽度" type="number" style="width:45%">
+        </div>
+    </div>
+    <div class="row form-group">
+        <div class="col-xs-12 col-md-3 name-label">单价（元/cm）：</div>
+        <div class="col-xs-12 col-md-9">
+            <div class="input-group">
+                <input class="form-control" id="unitPrice" placeholder="为空时自动获取" type="number">
+                <span class="input-group-addon btn btn-default"
+                      title="重新获取单价" onclick="getUnitPrice()">重置单价
+                </span>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-xs-8 col-md-8">
+            <div class="btn btn-info" style="width:100%;" onclick="calculatePrice(true)">重置单价计算</div>
+        </div>
+        <div class="col-xs-4 col-md-4">
+            <div class="btn btn-info" style="width:100%;" onclick="calculatePrice()">当前单价计算</div>
+        </div>
+    </div>
+
+    <div class="total-container margin-top total_sum_group">
+        总价：<span class="total btn-link for_total_sum" onclick="pickResultNum(this)">0</span>&nbsp;&nbsp;元<div class="btn btn-link" onclick="totalSum(this)">汇总</div>
+    </div>
+
+    <!-- 价格备注 -->
+    <div class="margin-top">
+        <div class="bg-info">
+            <div id="priceComment" class="comment"></div>
+            <div id="craftPriceComment" class="comment"></div>
+        </div>
+    </div>
+
+    <div class="margin-top" id="totalSum">
+        <h4 class="inline">汇总：</h4>
+        <div class="inline font20 total_sum_group">
+            <span id="totalSumExpression"></span>
+            <span id="totalSumNum" class="btn-link for_total_sum" onclick="pickResultNum(this)"></span>
+        </div>
+    </div>
+
+    <div id="afterCalculate" style="margin-top:20px;">
+        <h4>运算</h4>
+        <div class="form-group total_sum_group">
+            <input class="form-control inline for_num1" type="number" style="width:100px">
+            <span>&nbsp;&nbsp;x&nbsp;&nbsp;</span>
+            <span><input class="form-control inline operate_num" style="width:100px;" type="number"></span>
+            &nbsp;&nbsp;
+            <div class="btn btn-default" style="width:50px" onclick="calculate(this, '*')">=</div>
+            <a class="result_num for_total_sum btn-link" onclick="pickResultNum(this, '.for_num2')"></a>
+            <div class="btn btn-link" onclick="totalSum(this)">汇总</div>
+        </div>
+        <div class="form-group total_sum_group">
+            <input class="form-control inline for_num2" type="number" style="width:100px">
+            <span>&nbsp;&nbsp;+&nbsp;&nbsp;</span>
+            <span><input class="form-control inline operate_num" style="width:100px;" type="number"></span>
+            &nbsp;&nbsp;
+            <div class="btn btn-default" style="width:50px" onclick="calculate(this, '+')">=</div>
+            <a class="result_num for_total_sum btn-link" onclick="pickResultNum(this, '.for_num1')"></a>
+            <div class="btn btn-link" onclick="totalSum(this)">汇总</div>
+        </div>
+    </div>
+
+    <div class="btn btn-default" onclick="clearAll()" style="width:100px">全部重置</div>
+</div>
+
+
+<script>
+    $(function () {
+        // 加载项目
+        reloadSelect({
+            type : "1",
+            selector : "#category"
+        });
+
+        clearAll();
+    });
+
+
+    /**
+     * 项目onchange
+     */
+    function categoryOnchange(that) {
+        let $this = $(that);
+        let pId = $this.val();
+        // 加载品种
+        reloadSelect({
+            type : "2",
+            pId : pId,
+            selector : "#variety"
+        });
+        // 加载工艺
+        reloadCraft(pId);
+        // 置空单价
+        clearUnitPrice();
+    }
+
+
+    /**
+     * 品种onchange
+     */
+    function varietyOnchange() {
+        // 置空单价
+        clearUnitPrice();
+    }
+
+
+    /**
+     * 重加载项目、品种
+     */
+    function reloadSelect(params) {
+        let param = {
+            url : "/category",
+            data : {
+                type : params.type,
+                p_id : params.pId || "0"
+            }
+        }
+        let rows = post(param);
+        let options = [];
+        for (let i in rows) {
+            let row = rows[i];
+            let text = rows.length > 1 ? (Number(i)+1) + " - " +row.name : row.name ;
+            let $option = $(`<option value="${row.id}">${text}</option>`);
+            $option.data(row);
+            options.push($option);
+        }
+        if (options.length == 1) {
+            options[0].attr("selected", "selected");
+        }
+        $(params.selector).empty().html(options);
+        if (options.length > 1) {
+            $(params.selector).val("");
+        }
+    }
+
+    /**
+     * 重加载品种
+     */
+    function reloadCraft(pId) {
+        let param = {
+            url : "/category",
+            data : {
+                type : "3",
+                p_id : pId
+            }
+        }
+        let rows = post(param);
+        let labels = [];
+        for (let i in rows) {
+            let row = rows[i];
+            let $label = $(`<label><input type="checkbox" name="craft" value="${row.id}"> ${row.name}</label>`);
+            $label.data(row);
+            labels.push($label);
+        }
+        $("#craftContainer").empty().html(labels);
+    }
+
+    /**
+     * 清空单价
+     */
+    function clearUnitPrice() {
+        $("#unitPrice").val("");
+        $(".comment").text("");
+    }
+
+    /**
+     * 清空全部信息
+     */
+    function clearAll() {
+        // 计算结果
+        $(".total").text("0");
+        // 运算
+        $("input[class*=for_num]").val(0);
+        $(".result_num").text(0);
+        // 汇总
+        $("#totalSumNum").text(0);
+        $("#totalSumExpression").text("").removeAttr("totals");
+        // 单价
+        clearUnitPrice();
+        // 长度、宽度
+        $("#length,#width").val("");
+    }
+</script>
+
+<script>
+    /**
+     * 计算总价
+     */
+    function calculatePrice(resetUnitPrice) {
+        let lenWidth = getLengthWidth();
+        if (!lenWidth) {
+            return;
+        }
+
+        // 面积
+        let area = lenWidth[0] * lenWidth[1];
+        if (area <= 0) {
+            alert("尺寸需大于0");
+            return;
+        }
+
+        // 获取单价
+        let unitPrice = $("#unitPrice").val();
+        if (resetUnitPrice) {
+            unitPrice = getUnitPrice(Math.max(...lenWidth));
+        } else if (!unitPrice){
+            unitPrice = getUnitPrice(Math.max(...lenWidth));
+            if (!unitPrice) {
+                alert("未找到价格定义");
+                return;
+            }
+        }
+
+        // 总价
+        let total = area * unitPrice;
+        $(".total").text(total.toFixed(2));
+    }
+
+
+    /**
+     * 获取单价
+     */
+    function getUnitPrice() {
+        let c_id = $("#variety").val();
+        if (!c_id) {
+            alert("先选择项目或品种");
+            return;
+        }
+        // 长宽
+        let lenWidth = getLengthWidth();
+        if (!lenWidth) {
+            return;
+        }
+        let size = Math.max(...lenWidth);
+
+        // 总单价 = 品种单价 + 工艺单价
+        let unitPrice = 0;
+        /**
+         * 获取品种单价
+         */
+        // 特殊品种价格
+        let varietyPriceAndComment = getSpecialUnitPrice(c_id, size);
+        if (!varietyPriceAndComment) {
+            let rows = post({
+                url : "/get_price",
+                data : {
+                    c_id : c_id,
+                    length : size
+                }
+            });
+            let row = rows[0];
+            varietyPriceAndComment = [Number(row.unit_price), row.comment];
+        }
+        console.log("varietyPriceAndComment", varietyPriceAndComment)
+        // + 品种单价
+        unitPrice += varietyPriceAndComment[0];
+        refreshComment("#priceComment", "品种单价：" + varietyPriceAndComment[1]);
+
+        /**
+         * 获取工艺单价
+         */
+        let craftIds = [];
+        $("input[name=craft]:checked").each(function () {
+            craftIds.push($(this).val())
+        });
+        if (craftIds.length > 0) {
+            let rows2 = post({
+                url : "/get_price",
+                data : {
+                    c_id : craftIds.join(","),
+                    length : size
+                }
+            });
+            let craftPriceComment = "";
+            for (let craftPriceRow of rows2) {
+                unitPrice += Number(craftPriceRow.unit_price);
+                craftPriceComment += `<div>${craftPriceRow.comment}</div>`;
+            }
+            refreshComment("#craftPriceComment", craftPriceComment);
+        }
+
+        unitPrice = unitPrice.toFixed(4);
+        $("#unitPrice").val(unitPrice);
+        return unitPrice;
+    }
+
+
+    /**
+     * 获取长度、宽度
+     */
+    function getLengthWidth() {
+        let length = $("#length").val().replace(/。/g, ".").replace(/\s+/g, "");
+        let width = $("#width").val().replace(/。/g, ".").replace(/\s+/g, "");
+        if (!length && !width) {
+            alert("请输入尺寸");
+            return null;
+        }
+
+        length = length || 1;
+        width = width || 1;
+        if (!$.isNumeric(length) && !$.isNumeric(width)) {
+            alert("尺寸需为数字");
+            return null;
+        }
+        return [Number(length), Number(width)]
+    }
+
+
+    /**
+     * 获取特殊项目单价
+     */
+    function getSpecialUnitPrice(varietyId, size) {
+        // 迷你发光字下的唯一无名品种
+        if (varietyId == 97) {
+            let price = 0;
+            let comment;
+            if (size <= 10)  {
+                price = 2;
+                comment = "迷你发光字10cm以下，2元/cm";
+            } else {
+                // 1元/cm
+                price = size + 1;
+                comment = "迷你发光字10cm上，长度 + 1元/cm";
+            }
+            return [price, comment]
+        }
+        return null;
+    }
+
+
+    /**
+     * 刷新备注
+     */
+    function refreshComment(selector, comment) {
+        let $comment = $(selector);
+        if (comment) {
+            $comment.html(comment).show();
+        } else {
+            $comment.hide();
+        }
+    }
+</script>
+
+<script>
+    /**
+     * 汇总
+     */
+    function totalSum(that) {
+        let val = $(that).closest(".total_sum_group").find(".for_total_sum").text();
+        if (!$.isNumeric(val)) {
+            return;
+        }
+        val = Number(val);
+        if (val == 0) {
+            return;
+        }
+
+        let totals = $("#totalSumExpression").attr("totals") || "";
+        totals += val + ",";
+
+        let expression = "";
+        let totalSum = 0;
+        for (let total of totals.split(",")) {
+            if (total && total != '') {
+                expression += total + " + ";
+                totalSum += Number(total);
+            }
+        }
+        expression = expression.substring(0, expression.length - 2) + " = ";
+        $("#totalSumExpression").text(expression).attr("totals", totals);
+        totalSum = totalSum.toFixed(2);
+        $("#totalSumNum").text(totalSum);
+    }
+    
+    /**
+     * 运算
+     */
+    function calculate(that, operator) {
+        let $this = $(that);
+        let total = $this.closest(".form-group").find("[class*=for_num]").val();
+        let operateNum = $this.closest(".form-group").find("input.operate_num").val();
+        total = Number(total);
+        operateNum = Number(operateNum);
+        let result = 0;
+        if (operator == "+") {
+            result = total + operateNum;
+        } else if (operator == "*") {
+            result = total * operateNum;
+        }
+        $this.closest(".form-group").find(".result_num").text(result.toFixed(2));
+    }
+
+    /**
+     * 抓取值作为运算式参数
+     */
+    function pickResultNum(that, resultSelector) {
+        let $this = $(that);
+        let forNum = $this.text();
+        if (!resultSelector) {
+            resultSelector = "[class*=for_num]";
+        }
+        $(resultSelector).val(forNum);
+    }
+</script>
+
+<script>
+    function post(param) {
+        let rs = null;
+        let data = param.data || {};
+        $.ajax({
+            url : param.url,
+            async : false,
+            type: "post",
+            dataType : "json",
+            data : data,
+            success(data) {
+                rs = data;
+            }
+        });
+        return rs;
+    }
+</script>
+</body>
+</html>
